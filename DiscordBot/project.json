@@ -1,0 +1,14 @@
+{
+  "version": "1.0.0-*",
+
+  "dependencies": {
+    "Discord.Net": "1.0.0-rc",
+    "MySql.Data.EntityFrameworkCore": "7.0.7-m61"
+  },
+
+  "frameworks": {
+    "netstandard1.6": {
+      "imports": "dnxcore50"
+    }
+  }
+}
