@@ -1,19 +1,21 @@
 ﻿namespace DiscordBot.DAL.PersistenceLayer
 {
+    using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Linq;
-    using System.Threading.Tasks;
     using DAL;
 
     public sealed class DatabasePersistence
     {
-        private static DiscordBotDbContext Database { get; set; }
+        private static DiscordBotDbContext Database { get; set; } = GetContext();
 
         private bool AutoSaveChanges { get; }
 
-        public static void InitializePersistence(string connectionString)
+        public static void RenewDatabase()
         {
-            Database = DiscordBotDbContextFactory.Create(connectionString);
+            Database.Dispose();
+            Database = GetContext();
         }
 
         public DatabasePersistence(bool autoSaveChanges = true)
@@ -41,24 +43,6 @@
             }
         }
 
-        public async Task AddOrUpdateAsync<T>(T entity) where T : class
-        {
-            await AddOrUpdateAsync(entity, AutoSaveChanges);
-            await Task.CompletedTask;
-        }
-
-        public async Task AddOrUpdateAsync<T>(T entity, bool autoSaveChanges) where T : class
-        {
-            await Database.AddOrUpdateAsync(entity);
-
-            if (autoSaveChanges)
-            {
-                await SaveChangesAsync();
-            }
-
-            await Task.CompletedTask;
-        }
-
         public void AddOrUpdateRange<T>(IEnumerable<T> entities) where T : class
         {
             AddOrUpdateRange(entities, AutoSaveChanges);
@@ -75,27 +59,6 @@
             {
                 SaveChanges();
             }
-        }
-
-        public async Task AddOrUpdateRangeAsync<T>(IEnumerable<T> entities) where T : class
-        {
-            await AddOrUpdateRangeAsync(entities, AutoSaveChanges);
-            await Task.CompletedTask;
-        }
-
-        public async Task AddOrUpdateRangeAsync<T>(IEnumerable<T> entities, bool autoSaveChanges) where T : class
-        {
-            foreach (var entity in entities)
-            {
-                await AddOrUpdateAsync(entity, false);
-            }
-
-            if (autoSaveChanges)
-            {
-                await SaveChangesAsync();
-            }
-
-            await Task.CompletedTask;
         }
 
         public void Remove<T>(T entity) where T : class
@@ -136,15 +99,15 @@
             Database.SaveChanges();
         }
 
-        public async Task SaveChangesAsync()
-        {
-            await Database.SaveChangesAsync();
-            await Task.CompletedTask;
-        }
-
         public void Dispose()
         {
             Database.Dispose();
+        }
+
+        private static DiscordBotDbContext GetContext()
+        {
+            return new DiscordBotDbContextFactory().Create(Path.Combine(AppContext.BaseDirectory,
+                string.Format("..{0}..{0}..{0}", Path.DirectorySeparatorChar)));
         }
     }
 }

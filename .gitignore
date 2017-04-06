@@ -251,5 +251,7 @@ paket-files/
 .idea/
 *.sln.iml
 
-# Bot Token File
+# Custom
 **/token.key
+!**/appsettings.*
+**/appsettings.local.json

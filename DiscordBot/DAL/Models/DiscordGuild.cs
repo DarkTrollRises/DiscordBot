@@ -3,24 +3,24 @@ namespace DiscordBot.DAL.Models
 {
     using System;
     using System.Collections.Generic;
+    using System.ComponentModel;
     using System.ComponentModel.DataAnnotations;
     using System.ComponentModel.DataAnnotations.Schema;
     using Utilities;
 
-    public class DiscordUser
+    public class DiscordGuild
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
-        [Obsolete("Use DiscordUser.UserId instead")]
+        [Obsolete("Use DiscordGuild.GuildId instead")]
         public long Id { get; set; }
 
         [Required]
-        [StringLength(32)]
-        public string Username { get; set; }
+        [StringLength(64)]
+        public string GuildName { get; set; }
 
         [NotMapped]
-        public ulong UserId
-        {
+        public ulong GuildId {
             get => Id.ConvertToUlong();
             set => Id = value.ConvertToLong();
         }

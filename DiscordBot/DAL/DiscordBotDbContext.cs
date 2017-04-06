@@ -1,6 +1,7 @@
-﻿namespace DiscordBot.DAL
+﻿#pragma warning disable 618
+namespace DiscordBot.DAL
 {
-    using System.Threading.Tasks;
+    using System.Linq;
     using Microsoft.EntityFrameworkCore;
     using Models;
 
@@ -8,36 +9,26 @@
     {
         public DbSet<DiscordUser> DiscordUsers { get; set; }
 
+        public DbSet<DiscordGuild> DiscordGuilds { get; set; }
+
+        public DbSet<DiscordUserDiscordGuild> DiscordUserDiscordGuilds { get; set; }
+
         public DiscordBotDbContext(DbContextOptions<DiscordBotDbContext> options)
             : base(options)
         {
         }
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            // Add composite keys here
+            modelBuilder.Entity<DiscordUserDiscordGuild>().HasKey(x => new { x.DiscordUser_Id, x.DiscordGuild_Id });
+        }
+
         public void AddOrUpdate<T>(T entity) where T : class
         {
-            var existingEntity = Set<T>().Find(entity);
-
-            SetEntityState(entity, existingEntity);
-        }
-
-        public async Task AddOrUpdateAsync<T>(T entity) where T : class
-        {
-            var existingEntity = await Set<T>().FindAsync(entity);
-
-            SetEntityState(entity, existingEntity);
-            await Task.CompletedTask;
-        }
-
-        private void SetEntityState<T>(T entity, T existingEntity) where T : class
-        {
-            if (existingEntity != null)
-            {
-                Entry(existingEntity).State = EntityState.Modified;
-            }
-            else
-            {
-                Entry(entity).State = EntityState.Added;
-            }
+            Entry(entity).State = Set<T>().Attach(entity).State == EntityState.Unchanged
+                    ? EntityState.Modified
+                    : EntityState.Added;
         }
     }
 }

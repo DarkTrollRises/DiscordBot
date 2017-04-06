@@ -1,23 +1,43 @@
 ﻿namespace DiscordBot.DAL
 {
     using Microsoft.EntityFrameworkCore;
+    using Microsoft.EntityFrameworkCore.Infrastructure;
+    using Microsoft.Extensions.Configuration;
     using MySQL.Data.EntityFrameworkCore.Extensions;
 
     /// <summary>
     /// Factory class for DiscordBotDbContext
     /// </summary>
-    public static class DiscordBotDbContextFactory
+    public class DiscordBotDbContextFactory : IDbContextFactory<DiscordBotDbContext>
     {
-        public static DiscordBotDbContext Create(string connectionString)
+        public DiscordBotDbContext Create(DbContextFactoryOptions options)
         {
-            var optionsBuilder = new DbContextOptionsBuilder<DiscordBotDbContext>();
-            optionsBuilder.UseMySQL(connectionString);
+            return Create(options.ContentRootPath);
+        }
 
-            //Ensure database creation
-            var context = new DiscordBotDbContext(optionsBuilder.Options);
-            context.Database.EnsureCreated();
+        public DiscordBotDbContext Create(string contentPath)
+        {
+            var connectionString = new ConfigurationBuilder()
+                .SetBasePath(contentPath)
+                .AddJsonFile("appsettings.json", false, true)
+                .Build()
+                .GetConnectionString("DiscordBotDbContext");
 
-            return context;
+            var settings = new ConfigurationBuilder()
+                .SetBasePath(contentPath)
+                .AddJsonFile("appsettings.default.json", optional: false, reloadOnChange: true)
+                .AddJsonFile("appsettings.local.json", optional: true, reloadOnChange: true)
+                .Build()
+                .GetSection("ConnectionSettings");
+
+            connectionString = connectionString
+                .Replace("{host}", settings["host"])
+                .Replace("{user}", settings["user"])
+                .Replace("{pass}", settings["pass"])
+                .Replace("{port}", settings["port"])
+                .Replace("{database}", settings["database"]);
+
+            return new DiscordBotDbContext(new DbContextOptionsBuilder<DiscordBotDbContext>().UseMySQL(connectionString).Options);
         }
     }
 }
