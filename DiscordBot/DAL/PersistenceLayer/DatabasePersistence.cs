@@ -8,15 +8,11 @@
 
     public sealed class DatabasePersistence
     {
-        private static DiscordBotDbContext Database { get; set; } = GetContext();
+        private static DiscordBotDbContext Database { get; } = GetContext();
+
+        private static string DatabaseSettings { get; set; }
 
         private bool AutoSaveChanges { get; }
-
-        public static void RenewDatabase()
-        {
-            Database.Dispose();
-            Database = GetContext();
-        }
 
         public DatabasePersistence(bool autoSaveChanges = true)
         {
@@ -106,8 +102,13 @@
 
         private static DiscordBotDbContext GetContext()
         {
-            return new DiscordBotDbContextFactory().Create(Path.Combine(AppContext.BaseDirectory,
-                string.Format("..{0}..{0}..{0}", Path.DirectorySeparatorChar)));
+            if (string.IsNullOrEmpty(DatabaseSettings))
+            {
+                DatabaseSettings = Path.Combine(AppContext.BaseDirectory,
+                    string.Format("..{0}..{0}..{0}", Path.DirectorySeparatorChar));
+            }
+
+            return new DiscordBotDbContextFactory().Create(DatabaseSettings);
         }
     }
 }

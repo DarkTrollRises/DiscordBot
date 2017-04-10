@@ -4,12 +4,12 @@
     {
         public static ulong ConvertToUlong(this long source)
         {
-            return (ulong) (source + long.MaxValue);
+            return (ulong) (source - long.MinValue);
         }
 
         public static long ConvertToLong(this ulong source)
         {
-            return (long) source - long.MaxValue;
+            return (long) source + long.MinValue;
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿namespace DiscordBot.Utilities
 {
+    using System;
     using System.Linq;
     using System.Threading.Tasks;
     using DAL.Models;
@@ -9,7 +10,12 @@
     {
         private static DatabasePersistence persistence = new DatabasePersistence(false);
 
-        public static async Task AddUser(DiscordUser user, bool autoSaveChanges = true)
+        public static async Task AddUserAsync(DiscordUser user, bool autoSaveChanges = true)
+        {
+            await Task.Run(() => AddUser(user, autoSaveChanges));
+        }
+
+        public static void AddUser(DiscordUser user, bool autoSaveChanges = true)
         {
             user.Active = true;
             persistence.AddOrUpdate(user);
@@ -18,11 +24,14 @@
             {
                 persistence.SaveChanges();
             }
-
-            await Task.CompletedTask;
         }
 
-        public static async Task AddGuild(DiscordGuild guild, bool autoSaveChanges = true)
+        public static async Task AddGuildAsync(DiscordGuild guild, bool autoSaveChanges = true)
+        {
+            await Task.Run(() => AddGuild(guild, autoSaveChanges));
+        }
+
+        public static void AddGuild(DiscordGuild guild, bool autoSaveChanges = true)
         {
             guild.Active = true;
             persistence.AddOrUpdate(guild);
@@ -31,53 +40,73 @@
             {
                 persistence.SaveChanges();
             }
-
-            await Task.CompletedTask;
         }
 
-        public static async Task AddUserGuild(DiscordUser user, DiscordGuild guild)
+        public static async Task AddUserGuildAsync(DiscordUser user, DiscordGuild guild, bool autoSaveChanges = true)
         {
-            await AddUser(user, false);
-            await AddGuild(guild, false);
-            persistence.AddOrUpdate(new DiscordUserDiscordGuild { UserId = user.UserId, GuildId = guild.GuildId, Active = true });
-            persistence.SaveChanges();
-
-            await Task.CompletedTask;
+            await Task.Run(() => AddUserGuild(user, guild, autoSaveChanges));
         }
 
-        public static async Task RemoveUser(DiscordUser user)
+        public static void AddUserGuild(DiscordUser user, DiscordGuild guild, bool autoSaveChanges = true)
+        {
+            AddUser(user, false);
+            AddGuild(guild, false);
+            persistence.AddOrUpdate(new DiscordUserDiscordGuild { UserId = user.UserId, GuildId = guild.GuildId, Active = true });
+
+            if (autoSaveChanges)
+            {
+                persistence.SaveChanges();
+            }
+        }
+
+        public static async Task RemoveUserAsync(DiscordUser user, bool autoSaveChanges = true)
+        {
+            await Task.Run(() => RemoveUser(user, autoSaveChanges));
+        }
+
+        public static void RemoveUser(DiscordUser user, bool autoSaveChanges = true)
         {
             user.Active = false;
             persistence.AddOrUpdate(user);
 
             foreach (var userGuild in user.DiscordUserDiscordGuilds)
             {
-                userGuild.Active = false;
-                persistence.AddOrUpdate(userGuild);
+                RemoveUserGuild(userGuild, false);
             }
 
-            persistence.SaveChanges();
-
-            await Task.CompletedTask;
+            if (autoSaveChanges)
+            {
+                persistence.SaveChanges();
+            }
         }
 
-        public static async Task RemoveGuild(DiscordGuild guild)
+        public static async Task RemoveGuildAsync(DiscordGuild guild, bool autoSaveChanges = true)
+        {
+            await Task.Run(() => RemoveGuild(guild, autoSaveChanges));
+        }
+
+        public static void RemoveGuild(DiscordGuild guild, bool autoSaveChanges = true)
         {
             guild.Active = false;
             persistence.AddOrUpdate(guild);
 
             foreach (var userGuild in persistence.Get<DiscordUserDiscordGuild>().ToList().Where(x => x.GuildId == guild.GuildId))
             {
-                userGuild.Active = false;
-                persistence.AddOrUpdate(userGuild);
+                RemoveUserGuild(userGuild, false);
             }
 
-            persistence.SaveChanges();
-
-            await Task.CompletedTask;
+            if (autoSaveChanges)
+            {
+                persistence.SaveChanges();
+            }
         }
 
-        public static async Task RemoveUserGuild(DiscordUser user, DiscordGuild guild)
+        public static async Task RemoveUserGuildAsync(DiscordUser user, DiscordGuild guild, bool autoSaveChanges = true)
+        {
+            await Task.Run(() => RemoveUserGuild(user, guild, autoSaveChanges));
+        }
+
+        public static void RemoveUserGuild(DiscordUser user, DiscordGuild guild, bool autoSaveChanges = true)
         {
             var removedItem = persistence.Get<DiscordUserDiscordGuild>()
                 .ToList()
@@ -85,16 +114,36 @@
 
             if (removedItem != null)
             {
-                removedItem.Active = false;
-                persistence.AddOrUpdate(removedItem, true);
+                RemoveUserGuild(removedItem, autoSaveChanges);
             }
-
-            await Task.CompletedTask;
         }
 
-        public static void RenewPersistence()
+        public static async Task RemoveUserGuildAsync(DiscordUserDiscordGuild userGuild, bool autoSaveChanges = true)
         {
-            DatabasePersistence.RenewDatabase();
+            await Task.Run(() => RemoveUserGuild(userGuild, autoSaveChanges));
+        }
+
+        public static void RemoveUserGuild(DiscordUserDiscordGuild userGuild, bool autoSaveChanges = true)
+        {
+            userGuild.Active = false;
+            persistence.AddOrUpdate(userGuild);
+
+            if (persistence.Get<DiscordUserDiscordGuild>()
+                    .Count(x => x.UserId == userGuild.UserId && x.GuildId != userGuild.GuildId) == 0)
+            {
+                RemoveUser(userGuild.DiscordUser, false);
+            }
+
+            if (persistence.Get<DiscordUserDiscordGuild>()
+                    .Count(x => x.GuildId == userGuild.GuildId && x.UserId != userGuild.UserId) == 0)
+            {
+                RemoveGuild(userGuild.DiscordGuild, false);
+            }
+
+            if (autoSaveChanges)
+            {
+                persistence.SaveChanges();
+            }
         }
     }
 }

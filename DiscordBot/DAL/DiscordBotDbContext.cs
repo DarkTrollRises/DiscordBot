@@ -1,7 +1,9 @@
 ﻿#pragma warning disable 618
 namespace DiscordBot.DAL
 {
+    using System.Collections.Generic;
     using System.Linq;
+    using System.Reflection;
     using Microsoft.EntityFrameworkCore;
     using Models;
 
@@ -13,7 +15,7 @@ namespace DiscordBot.DAL
 
         public DbSet<DiscordUserDiscordGuild> DiscordUserDiscordGuilds { get; set; }
 
-        public DiscordBotDbContext(DbContextOptions<DiscordBotDbContext> options)
+        public DiscordBotDbContext(DbContextOptions options)
             : base(options)
         {
         }
@@ -26,9 +28,46 @@ namespace DiscordBot.DAL
 
         public void AddOrUpdate<T>(T entity) where T : class
         {
-            Entry(entity).State = Set<T>().Attach(entity).State == EntityState.Unchanged
-                    ? EntityState.Modified
-                    : EntityState.Added;
+            var existingEntity = Set<T>().Local.SingleOrDefault(x => CheckKeys(x, entity)) ??
+                                 Set<T>().SingleOrDefault(x => CheckKeys(x, entity));
+
+            if (existingEntity != null)
+            {
+                Entry(existingEntity).CurrentValues.SetValues(entity);
+            }
+            else
+            {
+                Entry(entity).State = EntityState.Added;
+            }
+        }
+
+        private IEnumerable<object> GetKeyValues<T>(T entity)
+        {
+            return Model.FindEntityType(typeof(T)).FindPrimaryKey().Properties
+                .Select(x => x.Name)
+                .ToArray()
+                .Select(x => entity.GetType().GetProperty(x).GetValue(entity, null));
+        }
+
+        private bool CheckKeys<T>(T e1, T e2)
+        {
+            var e1Keys = GetKeyValues(e1).ToArray();
+            var e2Keys = GetKeyValues(e2).ToArray();
+
+            if (e1Keys.Length == e2Keys.Length)
+            {
+                for (var i = 0; i < e1Keys.Length; i++)
+                {
+                    if (!e1Keys[i].Equals(e2Keys[i]))
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            return false;
         }
     }
 }
