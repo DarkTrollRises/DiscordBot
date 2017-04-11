@@ -1,7 +1,6 @@
 ﻿namespace DiscordBot
 {
     using System;
-    using System.Collections.Generic;
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
@@ -16,7 +15,7 @@
 
     public class DiscordBot
     {
-        private DatabasePersistence persistence = new DatabasePersistence();
+        private readonly DatabasePersistence persistence = new DatabasePersistence();
 
         public DiscordSocketClient Client { get; set; }
 

@@ -1,6 +1,5 @@
 ﻿namespace DiscordBot.Utilities
 {
-    using System;
     using System.Linq;
     using System.Threading.Tasks;
     using DAL.Models;
@@ -8,7 +7,7 @@
 
     public static class UserGuildManagement
     {
-        private static DatabasePersistence persistence = new DatabasePersistence(false);
+        private static readonly DatabasePersistence persistence = new DatabasePersistence(false);
 
         public static async Task AddUserAsync(DiscordUser user, bool autoSaveChanges = true)
         {
