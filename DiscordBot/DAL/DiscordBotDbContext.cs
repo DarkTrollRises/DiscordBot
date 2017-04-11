@@ -41,7 +41,7 @@ namespace DiscordBot.DAL
             }
         }
 
-        private IEnumerable<object> GetKeyValues<T>(T entity)
+        public IEnumerable<object> GetKeyValues<T>(T entity)
         {
             return Model.FindEntityType(typeof(T)).FindPrimaryKey().Properties
                 .Select(x => x.Name)
@@ -49,22 +49,14 @@ namespace DiscordBot.DAL
                 .Select(x => entity.GetType().GetProperty(x).GetValue(entity, null));
         }
 
-        private bool CheckKeys<T>(T e1, T e2)
+        public bool CheckKeys<T>(T e1, T e2)
         {
             var e1Keys = GetKeyValues(e1).ToArray();
             var e2Keys = GetKeyValues(e2).ToArray();
 
             if (e1Keys.Length == e2Keys.Length)
             {
-                for (var i = 0; i < e1Keys.Length; i++)
-                {
-                    if (!e1Keys[i].Equals(e2Keys[i]))
-                    {
-                        return false;
-                    }
-                }
-
-                return true;
+                return !e1Keys.Where((key1, key2Index) => !key1.Equals(e2Keys[key2Index])).Any();
             }
 
             return false;

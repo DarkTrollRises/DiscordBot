@@ -57,12 +57,12 @@
                     await AddNewUserGuilds(guild);
                 }
 
-                foreach (var guild in persistence.Get<DiscordGuild>().Include(x => x.DiscordUserDiscordGuilds).ToList().Where(x => x.Active && Client.Guilds.All(y => y.Id != x.GuildId)))
+                foreach (var guild in persistence.Get<DiscordGuild>().Include(x => x.DiscordUserDiscordGuilds).ThenInclude(x => x.DiscordUser).ToList().Where(x => x.Active && Client.Guilds.All(y => y.Id != x.GuildId)))
                 {
                     await UserGuildManagement.RemoveGuildAsync(guild);
                 }
 
-                foreach (var user in persistence.Get<DiscordUser>().Include(x => x.DiscordUserDiscordGuilds).ToList().Where(x => x.Active && Client.Guilds.SelectMany(y => y.Users).Distinct().All(y => y.Id != x.UserId)))
+                foreach (var user in persistence.Get<DiscordUser>().Include(x => x.DiscordUserDiscordGuilds).ThenInclude(x => x.DiscordGuild).ToList().Where(x => x.Active && Client.Guilds.SelectMany(y => y.Users).Distinct().All(y => y.Id != x.UserId)))
                 {
                     await UserGuildManagement.RemoveUserAsync(user);
                 }
@@ -72,17 +72,43 @@
 
                 Client.UserUpdated += async (oldUser, newUser) =>
                 {
-                    if (oldUser.Username != newUser.Username)
+                    if (!newUser.IsBot && oldUser.Username != newUser.Username)
                     {
                         await UserGuildManagement.AddUserAsync(newUser.ToDiscordUser());
                     }
                 };
 
-                Client.UserJoined += async user => await UserGuildManagement.AddUserGuildAsync(user.ToDiscordUser(), user.Guild.ToDiscordGuild());
-                Client.UserUnbanned += async (user, guild) => await UserGuildManagement.AddUserGuildAsync(user.ToDiscordUser(), guild.ToDiscordGuild());
+                Client.UserJoined += async user =>
+                {
+                    if (!user.IsBot)
+                    {
+                        await UserGuildManagement.AddUserGuildAsync(user.ToDiscordUser(), user.Guild.ToDiscordGuild());
+                    }
+                };
 
-                Client.UserLeft += async user => await UserGuildManagement.RemoveUserGuildAsync(user.ToDiscordUser(), user.Guild.ToDiscordGuild());
-                Client.UserBanned += async (user, guild) => await UserGuildManagement.RemoveUserGuildAsync(user.ToDiscordUser(), guild.ToDiscordGuild());
+                Client.UserUnbanned += async (user, guild) =>
+                {
+                    if (!user.IsBot)
+                    {
+                        await UserGuildManagement.AddUserGuildAsync(user.ToDiscordUser(), guild.ToDiscordGuild());
+                    }
+                };
+
+                Client.UserLeft += async user =>
+                {
+                    if (!user.IsBot)
+                    {
+                        await UserGuildManagement.RemoveUserGuildAsync(user.ToDiscordUser(), user.Guild.ToDiscordGuild());
+                    }
+                };
+
+                Client.UserBanned += async (user, guild) =>
+                {
+                    if (!user.IsBot)
+                    {
+                        await UserGuildManagement.RemoveUserGuildAsync(user.ToDiscordUser(), guild.ToDiscordGuild());
+                    }
+                };
 
                 Client.GuildUpdated += async (oldGuild, newGuild) =>
                 {

@@ -129,15 +129,19 @@
             persistence.AddOrUpdate(userGuild);
 
             if (persistence.Get<DiscordUserDiscordGuild>()
-                    .Count(x => x.UserId == userGuild.UserId && x.GuildId != userGuild.GuildId) == 0)
+                    .Count(x => x.Active && x.UserId == userGuild.UserId && x.GuildId != userGuild.GuildId) == 0)
             {
-                RemoveUser(userGuild.DiscordUser, false);
+                var newUser = userGuild.DiscordUser;
+                newUser.Active = false;
+                persistence.AddOrUpdate(newUser);
             }
 
             if (persistence.Get<DiscordUserDiscordGuild>()
-                    .Count(x => x.GuildId == userGuild.GuildId && x.UserId != userGuild.UserId) == 0)
+                    .Count(x => x.Active && x.GuildId == userGuild.GuildId && x.UserId != userGuild.UserId) == 0)
             {
-                RemoveGuild(userGuild.DiscordGuild, false);
+                var newGuild = userGuild.DiscordGuild;
+                newGuild.Active = false;
+                persistence.AddOrUpdate(newGuild);
             }
 
             if (autoSaveChanges)
