@@ -11,10 +11,10 @@
 
         public static async Task AddUserAsync(DiscordUser user, bool autoSaveChanges = true)
         {
-            await Task.Run(() => AddUser(user, autoSaveChanges));
+            await Task.Run(() => AddOrUpdateUser(user, autoSaveChanges));
         }
 
-        public static void AddUser(DiscordUser user, bool autoSaveChanges = true)
+        public static void AddOrUpdateUser(DiscordUser user, bool autoSaveChanges = true)
         {
             user.Active = true;
             persistence.AddOrUpdate(user);
@@ -25,12 +25,12 @@
             }
         }
 
-        public static async Task AddGuildAsync(DiscordGuild guild, bool autoSaveChanges = true)
+        public static async Task AddOrUpdateGuildAsync(DiscordGuild guild, bool autoSaveChanges = true)
         {
-            await Task.Run(() => AddGuild(guild, autoSaveChanges));
+            await Task.Run(() => AddOrUpdateGuild(guild, autoSaveChanges));
         }
 
-        public static void AddGuild(DiscordGuild guild, bool autoSaveChanges = true)
+        public static void AddOrUpdateGuild(DiscordGuild guild, bool autoSaveChanges = true)
         {
             guild.Active = true;
             persistence.AddOrUpdate(guild);
@@ -41,15 +41,15 @@
             }
         }
 
-        public static async Task AddUserGuildAsync(DiscordUser user, DiscordGuild guild, bool autoSaveChanges = true)
+        public static async Task AddOrUpdateUserGuildAsync(DiscordUser user, DiscordGuild guild, bool autoSaveChanges = true)
         {
-            await Task.Run(() => AddUserGuild(user, guild, autoSaveChanges));
+            await Task.Run(() => AddOrUpdateUserGuild(user, guild, autoSaveChanges));
         }
 
-        public static void AddUserGuild(DiscordUser user, DiscordGuild guild, bool autoSaveChanges = true)
+        public static void AddOrUpdateUserGuild(DiscordUser user, DiscordGuild guild, bool autoSaveChanges = true)
         {
-            AddUser(user, false);
-            AddGuild(guild, false);
+            AddOrUpdateUser(user, false);
+            AddOrUpdateGuild(guild, false);
             persistence.AddOrUpdate(new DiscordUserDiscordGuild { UserId = user.UserId, GuildId = guild.GuildId, Active = true });
 
             if (autoSaveChanges)

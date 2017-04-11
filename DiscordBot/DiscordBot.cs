@@ -81,7 +81,7 @@
                 {
                     if (!user.IsBot)
                     {
-                        await UserGuildManagement.AddUserGuildAsync(user.ToDiscordUser(), user.Guild.ToDiscordGuild());
+                        await UserGuildManagement.AddOrUpdateUserGuildAsync(user.ToDiscordUser(), user.Guild.ToDiscordGuild());
                     }
                 };
 
@@ -89,7 +89,7 @@
                 {
                     if (!user.IsBot)
                     {
-                        await UserGuildManagement.AddUserGuildAsync(user.ToDiscordUser(), guild.ToDiscordGuild());
+                        await UserGuildManagement.AddOrUpdateUserGuildAsync(user.ToDiscordUser(), guild.ToDiscordGuild());
                     }
                 };
 
@@ -113,7 +113,7 @@
                 {
                     if (oldGuild.Name != newGuild.Name)
                     {
-                        await UserGuildManagement.AddGuildAsync(newGuild.ToDiscordGuild());
+                        await UserGuildManagement.AddOrUpdateGuildAsync(newGuild.ToDiscordGuild());
                     }
                 };
 
@@ -137,12 +137,12 @@
                 foreach (var user in guild.Users.Where(x => !x.IsBot))
                 {
                     var newUser = user.ToDiscordUser();
-                    await UserGuildManagement.AddUserGuildAsync(newUser, guild.ToDiscordGuild());
+                    await UserGuildManagement.AddOrUpdateUserGuildAsync(newUser, guild.ToDiscordGuild());
                 }
             }
             else
             {
-                await UserGuildManagement.AddGuildAsync(guild.ToDiscordGuild());
+                await UserGuildManagement.AddOrUpdateGuildAsync(guild.ToDiscordGuild());
             }
         }
     }
