@@ -41,16 +41,27 @@
             }
         }
 
-        public static async Task AddOrUpdateUserGuildAsync(DiscordUser user, DiscordGuild guild, bool autoSaveChanges = true)
+        public static async Task AddOrUpdateUserGuildAsync(DiscordUser user, DiscordGuild guild, string nickname = null, bool autoSaveChanges = true)
         {
-            await Task.Run(() => AddOrUpdateUserGuild(user, guild, autoSaveChanges));
+            await Task.Run(() => AddOrUpdateUserGuild(user, guild, nickname, autoSaveChanges));
         }
 
-        public static void AddOrUpdateUserGuild(DiscordUser user, DiscordGuild guild, bool autoSaveChanges = true)
+        public static async Task AddOrUpdateUserGuildAsync(DiscordUserDiscordGuild userGuild,
+            bool autoSaveChanges = true)
         {
-            AddOrUpdateUser(user, false);
-            AddOrUpdateGuild(guild, false);
-            persistence.AddOrUpdate(new DiscordUserDiscordGuild { UserId = user.UserId, GuildId = guild.GuildId, Active = true });
+            await Task.Run(() => AddOrUpdateUserGuild(userGuild, autoSaveChanges));
+        }
+
+        public static void AddOrUpdateUserGuild(DiscordUser user, DiscordGuild guild, string nickname = null, bool autoSaveChanges = true)
+        {
+            AddOrUpdateUserGuild(new DiscordUserDiscordGuild { DiscordUser = user, UserId = user.UserId, DiscordGuild = guild, GuildId = guild.GuildId, Nickname = nickname });
+        }
+
+        public static void AddOrUpdateUserGuild(DiscordUserDiscordGuild userGuild, bool autoSaveChanges = true)
+        {
+            AddOrUpdateUser(userGuild.DiscordUser, false);
+            AddOrUpdateGuild(userGuild.DiscordGuild, false);
+            persistence.AddOrUpdate(userGuild);
 
             if (autoSaveChanges)
             {

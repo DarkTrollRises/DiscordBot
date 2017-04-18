@@ -117,6 +117,15 @@
                     }
                 };
 
+                Client.GuildMemberUpdated += async (oldUser, newUser) =>
+                {
+                    if (oldUser.Nickname != newUser.Nickname)
+                    {
+                        await UserGuildManagement.AddOrUpdateUserGuildAsync(newUser.ToDiscordUser(),
+                            newUser.Guild.ToDiscordGuild(), newUser.Nickname);
+                    }
+                };
+
                 Client.JoinedGuild += async guild => await AddNewUserGuilds(guild);
                 Client.LeftGuild += async guild => await UserGuildManagement.RemoveGuildAsync(guild.ToDiscordGuild());
             }
@@ -136,8 +145,10 @@
             {
                 foreach (var user in guild.Users.Where(x => !x.IsBot))
                 {
-                    var newUser = user.ToDiscordUser();
-                    await UserGuildManagement.AddOrUpdateUserGuildAsync(newUser, guild.ToDiscordGuild());
+                    var newUserGuild = guild.Users.First(x => x.Id == user.Id).ToDiscordUserDiscordGuild();
+                    newUserGuild.Active = true;
+
+                    await UserGuildManagement.AddOrUpdateUserGuildAsync(newUserGuild);
                 }
             }
             else

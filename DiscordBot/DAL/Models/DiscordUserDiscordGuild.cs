@@ -35,6 +35,9 @@ namespace DiscordBot.DAL.Models
             set => DiscordGuild_Id = value.ConvertToLong();
         }
 
+        [StringLength(32)]
+        public string Nickname { get; set; }
+
         [Required]
         public bool Active { get; set; }
     }
